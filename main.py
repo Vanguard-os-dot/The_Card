@@ -1,40 +1,32 @@
-"""
-[THE CARD] Local Execution Entrypoint
-"""
-from orby_core.horse_predictor import HorseRacePredictor
-from orby_core.ai_analyst import AIAnalyst
+from flask import Flask, jsonify
+from flask_cors import CORS
+from predictor import RacePredictor
+from ai_analyst import AIAnalyst
 
-def run_local_simulation():
-    print("🚀 Booting up THE CARD local race desk...")
-    
-    predictor = HorseRacePredictor()
-    analyst = AIAnalyst()
-    
-    sample_card = {
-        "track": "Turffontein",
-        "distance": 1200,
-        "runners": [
-            {"name": "Lightning Bolt", "draw": 2, "weight": 56.5, "past_results": [1, 2, 1, 4]},
-            {"name": "Ironclad", "draw": 8, "weight": 58.0, "past_results": [3, 1, 5, 2]},
-            {"name": "Shadow Dancer", "draw": 1, "weight": 54.0, "past_results": [2, 3, 2, 1]}
-        ]
-    }
-    
-    conditions = {
-        "going": "Good",
-        "rail": "3m out on bend",
-        "distance": sample_card["distance"]
-    }
-    
-    results = predictor.evaluate_field(sample_card)
-    
-    print("\n🎯 Final Predicted Ratings Matrix:")
-    for idx, r in enumerate(results, 1):
-        print(f"#{idx}: {r['horse_name']} (Draw: {r['draw']}, Wt: {r['weight']}kg) - Score: {r['predicted_rating']}")
-        
-    notes = analyst.critique_field(f"{sample_card['track']} Sprint - {sample_card['distance']}m", results, conditions)
-    for note in notes:
-        print(note)
+app = Flask(__name__)
+CORS(app)
 
-if __name__ == "__main__":
-    run_local_simulation()
+predictor = RacePredictor()
+analyst = AIAnalyst()
+
+@app.route('/predict', methods=['GET'])
+def predict():
+    sample_runners = [
+        {"name": "Runner 1", "rating": 88, "form": 90},
+        {"name": "Runner 2", "rating": 75, "form": 82},
+        {"name": "Runner 3", "rating": 92, "form": 88}
+    ]
+    predictions = predictor.calculate_probabilities(sample_runners)
+    analysis = analyst.analyze_race([
+        {"name": r["runner"], "score": float(r["win_prob"].replace('%', '')) * 2} 
+        for r in predictions
+    ])
+    
+    return jsonify({
+        "status": "Active",
+        "predictions": predictions,
+        "analysis": analysis
+    })
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)

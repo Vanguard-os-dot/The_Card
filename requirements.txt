@@ -1,2 +1,6 @@
-numpy>=1.22.0
-pandas>=1.4.0
+flask
+flask-cors
+requests
+beautifulsoup4
+pandas
+numpy
