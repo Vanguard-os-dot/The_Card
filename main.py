@@ -1,3 +1,11 @@
+@app.route('/')
+def index():
+    if os.path.exists('index.html'):
+        return send_from_directory('.', 'index.html')
+    elif os.path.exists('the-card.html'):
+        return send_from_directory('.', 'the-card.html')
+    return 'Index file not found', 404
+
 
 def auto_launch(url):
     import subprocess
