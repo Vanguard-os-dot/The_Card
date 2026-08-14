@@ -726,3 +726,21 @@ renderMain();
 </script>
 </body>
 </html>
+<script>
+// Standalone On-Device Engine
+(function() {
+  const runners = ["Runner 1", "Runner 2", "Runner 3", "Runner 4", "Runner 5"];
+  let positions = [...runners];
+
+  function updateRace() {
+    // Local simulation logic running strictly inside client browser
+    positions.sort(() => Math.random() - 0.5);
+    const liveDisplay = document.getElementById("live-tracker");
+    if (liveDisplay) {
+      liveDisplay.innerHTML = "<strong>Live Status:</strong> Out of the gates! Leader: " + positions[0];
+    }
+  }
+
+  setInterval(updateRace, 3000);
+})();
+</script>
