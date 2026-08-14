@@ -1,4 +1,7 @@
 import os
+import threading
+import webbrowser
+import subprocess
 from flask import Flask, jsonify
 from flask_cors import CORS
 from predictor import RacePredictor
@@ -29,7 +32,20 @@ def predict():
         "analysis": analysis
     })
 
+def open_browser(url):
+    """Automatically opens the app UI upon server startup."""
+    try:
+        # Try Android/Termux native opener first
+        subprocess.run(["termux-open-url", url], check=True)
+    except Exception:
+        # Fallback to standard Python webbrowser launcher
+        webbrowser.open(url)
+
 if __name__ == '__main__':
-    # Reads PORT from launcher environment variable, defaulting to 5050
     port = int(os.environ.get("PORT", 5050))
+    target_url = f"http://127.0.0.1:{port}/predict"
+    
+    # Launch browser thread 1.5 seconds after execution so server is ready
+    threading.Timer(1.5, open_browser, args=[target_url]).start()
+    
     app.run(host='0.0.0.0', port=port)
