@@ -30,53 +30,42 @@ LIVE_RACE_CACHE = {
     "analysis": []
 }
 
+
 def fetch_live_race_data():
-    """
-    Simulates / triggers live race card updates.
-    Replace sample_live_card with your real web-scraper logic (e.g. BeautifulSoup/requests).
-    """
-    global LIVE_RACE_CACHE
-    while True:
-        try:
-            # Example structure: replace with your live race scraper function
-            sample_live_card = {
-                "race_name": "Live Upcoming Race",
-                "runners": [
-                    {"name": "Runner A", "rating": 85, "form": 88, "weight": 60.0},
-                    {"name": "Runner B", "rating": 78, "form": 80, "weight": 58.5},
-                    {"name": "Runner C", "rating": 90, "form": 92, "weight": 61.5},
-                    {"name": "Runner D", "rating": 70, "form": 65, "weight": 56.0}
-                ]
-            }
+    sample_runners = [
+        {"name": "Gimmethegreenlight", "jockey": "S. Khumalo", "trainer": "M. de Kock", "rating": 92, "form": 88, "draw": 1, "weight": "60kg"},
+        {"name": "Thunderstruck", "jockey": "R. Fourie", "trainer": "S. Tarry", "rating": 89, "form": 82, "draw": 2, "weight": "58kg"},
+        {"name": "Main Defender", "jockey": "C. Zackey", "trainer": "T. Peter", "rating": 85, "form": 78, "draw": 3, "weight": "58kg"},
+        {"name": "Royal Victory", "jockey": "G. Lerena", "trainer": "N. Kotzen", "rating": 81, "form": 70, "draw": 4, "weight": "56kg"}
+    ]
+    
+    preds = predictor.calculate_probabilities(sample_runners)
+    
+    # Merge additional runner details back into predictions
+    enriched_preds = []
+    for p in preds:
+        original = next((r for r in sample_runners if r['name'] == p['runner']), {})
+        p['jockey'] = original.get('jockey', 'N/A')
+        p['trainer'] = original.get('trainer', 'N/A')
+        p['weight'] = original.get('weight', '58kg')
+        p['draw'] = original.get('draw', 1)
+        enriched_preds.append(p)
 
-            runners = sample_live_card.get("runners", [])
-            predictions = predictor.calculate_probabilities(runners)
+    analysis_input = [{"name": r['name'], "score": r['rating']} for r in sample_runners]
+    analysis = analyst.analyze_race(analysis_input)
 
-            formatted_analysis = []
-            for r in predictions:
-                try:
-                    prob_val = float(r["win_prob"].replace('%', ''))
-                except ValueError:
-                    prob_val = 0.0
-                formatted_analysis.append({"name": r["runner"], "score": prob_val * 2})
+    return {
+        "race_name": "Gauteng Summer Cup Preview",
+        "track_id": "turffontein",
+        "time": "15:15",
+        "dist": "1400m",
+        "cls": "Grade 1",
+        "going": "Good",
+        "prizeK": "R1,000,000",
+        "predictions": enriched_preds,
+        "analysis": analysis
+    }
 
-            analysis = analyst.analyze_race(formatted_analysis)
-
-            # Update live cache in memory
-            LIVE_RACE_CACHE = {
-                "last_updated": time.strftime("%Y-%m-%d %H:%M:%S"),
-                "race_name": sample_live_card.get("race_name"),
-                "predictions": predictions,
-                "analysis": analysis
-            }
-        except Exception as e:
-            print(f"Error updating live race data: {e}")
-
-        # Refresh predictions automatically every 60 seconds
-        time.sleep(60)
-
-# Serve Frontend
-@app.route('/')
 def serve_index():
     return send_from_directory('.', 'index.html')
 
