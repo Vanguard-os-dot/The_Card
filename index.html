@@ -1,82 +1,193 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Card - Live Race Engine</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; }
-        .card { background: #1e293b; border-radius: 12px; padding: 20px; max-width: 600px; margin: 0 auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); }
-        h1 { font-size: 1.5rem; color: #38bdf8; margin-top: 0; }
-        .meta { font-size: 0.85rem; color: #94a3b8; margin-bottom: 20px; display: flex; justify-content: space-between; }
-        .runner { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #334155; margin-bottom: 8px; border-radius: 8px; }
-        .runner-name { font-weight: 600; font-size: 1rem; }
-        .prob { font-weight: bold; color: #4ade80; font-size: 1.1rem; }
-        .verdict { font-size: 0.8rem; color: #cbd5e1; margin-top: 4px; }
-        .badge { background: #0284c7; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE CARD — Race Predictor</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root{
+  --turf:#0F3D2E;
+  --turf-dark:#092219;
+  --parchment:#EFE7D8;
+  --parchment-dim:#DED2B4;
+  --brass:#C9A227;
+  --brass-bright:#E8C34A;
+  --silks:#8B2E22;
+  --ink:#181410;
+  --sage:#5C7A68;
+  --line: rgba(239,231,216,0.14);
+}
+
+*{box-sizing:border-box; margin:0; padding:0;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  background: radial-gradient(1200px 600px at 50% -200px, #14503C 0%, var(--turf) 55%, var(--turf-dark) 100%);
+  color:var(--parchment);
+  font-family:'Source Serif 4', serif;
+  min-height:100vh;
+  padding-bottom:60px;
+}
+a{color:inherit;}
+button{font-family:inherit; cursor:pointer;}
+
+header{
+  padding:28px 20px 20px;
+  text-align:center;
+  border-bottom:1px solid var(--line);
+  position:relative;
+  overflow:hidden;
+}
+.eyebrow{
+  font-family:'JetBrains Mono', monospace;
+  font-size:11px;
+  letter-spacing:0.32em;
+  color:var(--brass);
+  text-transform:uppercase;
+  margin-bottom:10px;
+}
+h1.wordmark{
+  font-family:'Oswald', sans-serif;
+  font-weight:700;
+  font-size:clamp(40px, 12vw, 64px);
+  letter-spacing:0.04em;
+  line-height:0.9;
+  color:var(--parchment);
+}
+h1.wordmark span{color:var(--brass-bright);}
+.tagline{
+  font-family:'JetBrains Mono', monospace;
+  font-size:11px;
+  color:var(--sage);
+  margin-top:10px;
+}
+.region-tabs{
+  display:flex; gap:2px;
+  max-width:720px; margin:22px auto 0; padding:0 16px;
+}
+.region-tab{
+  flex:1; background:transparent; border:1px solid var(--line);
+  color:var(--parchment-dim); font-family:'Oswald', sans-serif;
+  font-size:13px; letter-spacing:0.12em; text-transform:uppercase; padding:11px 6px;
+}
+.region-tab.active{ background:var(--brass); border-color:var(--brass); color:var(--ink); }
+
+.track-rail{
+  display:flex; gap:8px; overflow-x:auto;
+  max-width:720px; margin:14px auto 0; padding:2px 16px 8px;
+}
+.track-chip{
+  flex:0 0 auto; background:rgba(239,231,216,0.05); border:1px solid var(--line);
+  color:var(--parchment-dim); font-family:'JetBrains Mono', monospace; font-size:12px;
+  padding:8px 14px; border-radius:20px;
+}
+.track-chip.active{ border-color:var(--brass-bright); color:var(--brass-bright); background:rgba(201,162,39,0.12); }
+
+main{max-width:720px; margin:0 auto; padding:22px 14px 0;}
+.race-card{ background:rgba(239,231,216,0.035); border:1px solid var(--line); border-radius:6px; margin-bottom:18px; }
+.race-head{ padding:16px; border-bottom:1px solid var(--line); display:flex; justify-space-between; }
+.horse-table{width:100%; border-collapse:collapse;}
+.horse-row td{ padding:11px 10px; border-top:1px solid var(--line); }
+.ai-pct{ font-family:'JetBrains Mono', monospace; font-weight:700; color:var(--brass-bright); }
+.info-btn{ width:26px; height:26px; border-radius:50%; border:1px solid var(--brass); background:transparent; color:var(--brass-bright); }
+
+.modal-overlay{ position:fixed; inset:0; background:rgba(9,34,25,0.82); display:none; align-items:center; justify-content:center; z-index:100; }
+.modal-overlay.open{display:flex;}
+.modal-sheet{ background:var(--turf-dark); border:1px solid var(--brass); border-radius:10px; width:90%; max-width:520px; padding:22px; }
+</style>
 </head>
 <body>
-    <div class="card">
-        <h1 id="race-title">Loading Live Race Card...</h1>
-        <div class="meta">
-            <span>Status: <strong id="status" style="color:#facc15;">Connecting...</strong></span>
-            <span id="last-updated">--:--:--</span>
-        </div>
+<header>
+  <div class="eyebrow">AI Form Analysis</div>
+  <h1 class="wordmark">THE <span>CARD</span></h1>
+  <div class="tagline">Live prediction engine feed.</div>
+</header>
+<div class="region-tabs">
+  <button class="region-tab active" data-region="ZA">South Africa</button>
+  <button class="region-tab" data-region="INTL">International</button>
+</div>
+<div class="track-rail" id="trackRail"></div>
+<main id="mainContent"></main>
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-sheet" id="modalSheet"></div>
+</div>
+<script>
+const TRACKS = {
+  ZA: [{ id:'turffontein', name:'Turffontein' }, { id:'kenilworth', name:'Kenilworth' }],
+  INTL: [{ id:'ascot', name:'Ascot' }]
+};
 
-        <div id="runners-container">
-            <div style="text-align: center; color: #94a3b8; padding: 20px;">Fetching latest prediction probabilities...</div>
-        </div>
+let RACES = {};
+let currentRegion = 'ZA';
+let currentTrack = 'turffontein';
+
+function renderTrackRail(){
+  const rail = document.getElementById('trackRail');
+  rail.innerHTML = '';
+  TRACKS[currentRegion].forEach(t=>{
+    const chip = document.createElement('button');
+    chip.className = 'track-chip' + (t.id===currentTrack ? ' active':'');
+    chip.textContent = t.name;
+    chip.onclick = ()=>{ currentTrack = t.id; renderTrackRail(); renderMain(); };
+    rail.appendChild(chip);
+  });
+}
+
+function renderMain(){
+  const main = document.getElementById('mainContent');
+  const races = RACES[currentTrack] || [];
+  if(!races.length){
+    main.innerHTML = `<div style="text-align:center; padding:40px; color:var(--sage);">Waiting for backend...</div>`;
+    return;
+  }
+  main.innerHTML = races.map(r=>`
+    <div class="race-card">
+      <div class="race-head"><h2>${r.name}</h2></div>
+      <table class="horse-table">
+        ${r.horses.map(h=>`
+          <tr class="horse-row">
+            <td>${h.name}</td>
+            <td class="ai-pct">${h.ai}%</td>
+          </tr>
+        `).join('')}
+      </table>
     </div>
+  `).join('');
+}
 
-    <script>
-        // Clear local storage on boot to destroy cached stale races
-        localStorage.clear();
+async function syncLivePredictions(){
+  try {
+    const res = await fetch('/predict');
+    const data = await res.json();
+    if (data.live_data && data.live_data.predictions) {
+      RACES[currentTrack] = [{
+        name: data.live_data.race_name || 'Live Feature',
+        horses: data.live_data.predictions.map(p => ({
+          name: p.runner,
+          ai: Math.round(parseFloat(p.win_prob) || 0)
+        }))
+      }];
+      renderMain();
+    }
+  } catch(e) {}
+}
 
-        async function fetchLiveCard() {
-            try {
-                const res = await fetch('/predict');
-                const data = await res.json();
-                
-                if (!data.live_data || !data.live_data.predictions || data.live_data.predictions.length === 0) {
-                    document.getElementById('status').innerText = 'Waiting for card data';
-                    return;
-                }
+document.querySelectorAll('.region-tab').forEach(tab=>{
+  tab.onclick = ()=>{
+    document.querySelectorAll('.region-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    currentRegion = tab.dataset.region;
+    currentTrack = TRACKS[currentRegion][0].id;
+    renderTrackRail();
+    renderMain();
+  };
+});
 
-                document.getElementById('status').innerText = 'LIVE';
-                document.getElementById('status').style.color = '#4ade80';
-                document.getElementById('race-title').innerText = data.live_data.race_name || 'Live Race Predictions';
-                document.getElementById('last-updated').innerText = 'Updated: ' + (data.live_data.last_updated || 'Just now');
-
-                const predictions = data.live_data.predictions;
-                const analysis = data.live_data.analysis || [];
-                const container = document.getElementById('runners-container');
-                container.innerHTML = '';
-
-                predictions.forEach((p, index) => {
-                    const analystItem = analysis.find(a => a.runner === p.runner) || {};
-                    const verdict = analystItem.verdict || 'Standard runner';
-
-                    const row = document.createElement('div');
-                    row.className = 'runner';
-                    row.innerHTML = `
-                        <div>
-                            <div class="runner-name">${p.runner}</div>
-                            <div class="verdict"><span class="badge">AI</span> ${verdict}</div>
-                        </div>
-                        <div class="prob">${p.win_prob}</div>
-                    `;
-                    container.appendChild(row);
-                });
-            } catch (err) {
-                document.getElementById('status').innerText = 'Offline / Error';
-                document.getElementById('status').style.color = '#f87171';
-            }
-        }
-
-        // Poll Flask server every 5 seconds for live engine updates
-        setInterval(fetchLiveCard, 5000);
-        fetchLiveCard();
-    </script>
+renderTrackRail();
+renderMain();
+syncLivePredictions();
+setInterval(syncLivePredictions, 5000);
+</script>
 </body>
 </html>
