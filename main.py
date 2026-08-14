@@ -1,3 +1,11 @@
+
+def auto_launch(url):
+    import subprocess
+    try:
+        subprocess.run(['termux-open-url', url], check=False)
+    except Exception:
+        pass
+
 import os
 import time
 import threading
@@ -73,18 +81,21 @@ def serve_index():
     return send_from_directory('.', 'index.html')
 
 # Live Endpoint hit by index.html automatically
-@app.route('/predict', methods=['GET'])
+@app.route('/predict', methods=['GET', 'POST'])
 def predict():
-    return jsonify({
-        "status": "Active",
-        "live_data": LIVE_RACE_CACHE
-    })
-
-def auto_launch(url):
     try:
-        subprocess.run(["termux-open-url", url], check=True)
-    except Exception:
-        webbrowser.open(url)
+        if 'predictor' in globals():
+            data = predictor.get_live_predictions()
+        elif 'RacePredictor' in globals():
+            engine = RacePredictor()
+            data = engine.get_live_predictions()
+        else:
+            from predictor import RacePredictor
+            engine = RacePredictor()
+            data = engine.get_live_predictions()
+        return jsonify({'status': 'Active', 'live_data': data})
+    except Exception as e:
+        return jsonify({'status': 'Error', 'message': str(e)}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5050))
